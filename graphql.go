@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -15,6 +16,7 @@ import (
 // Client is a GraphQL client.
 type Client struct {
 	url        string // GraphQL server URL.
+	headers map[string]string
 	httpClient *http.Client
 }
 
@@ -27,7 +29,13 @@ func NewClient(url string, httpClient *http.Client) *Client {
 	return &Client{
 		url:        url,
 		httpClient: httpClient,
+		headers: make(map[string]string),
 	}
+}
+
+func (c *Client) AddHeader(k, v string) error {
+	c.headers[k] = v
+	return nil
 }
 
 // Query executes a single GraphQL query request,
@@ -95,6 +103,18 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 		return out.Errors
 	}
 	return nil
+}
+
+func (c *Client) Post(ctx context.Context, client *http.Client, url string, bodyType string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", bodyType)
+	for k, v := range c.headers {
+		req.Header.Set(k, v)
+	}
+	return ctxhttp.Do(ctx, client, req)
 }
 
 // errors represents the "errors" array in a response from a GraphQL server.
