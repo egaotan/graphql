@@ -73,7 +73,7 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	if err != nil {
 		return err
 	}
-	resp, err := ctxhttp.Post(ctx, c.httpClient, c.url, "application/json", &buf)
+	resp, err := c.Post(ctx, c.httpClient, c.url, "application/json", &buf)
 	if err != nil {
 		return err
 	}
